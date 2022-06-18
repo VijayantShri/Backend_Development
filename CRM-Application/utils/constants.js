@@ -11,7 +11,8 @@ module.exports = {
     userStatus: {
         pending: "PENDING",
         approved: "APPROVED",
-        rejected: "REJECTED"
+        rejected: "REJECTED",
+        inProgress: "IN_PROGRESS"
     },
     ticketStatus: {
         open: "OPEN",
