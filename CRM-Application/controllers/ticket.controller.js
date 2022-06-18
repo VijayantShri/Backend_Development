@@ -61,36 +61,46 @@ exports.createTicket = async (req, res) => {
  * 
  * Todo:
  * Allow user to filter based on status.
+ * 
+ * Depending on the user I need to return different list of tickets: 
+ * 
+ * 1. Admin -> List of all tickets.
+ * 2. Engineer -> List of all the tickets, either created/assigned.
+ * 3. User -> List of tickets created by him/her.
  */
 
 exports.getAllTickets = async (req, res) => {
-    
+    const queryObj = {};
     const user = await User.findOne({userId: req.userId});
-    if (user.ticketsCreated==null || user.ticketsCreated.length == 0) {
-        return res.status(200).send({
-            message: "No tickets created by you !!!"
-        });
-    } 
-    // I need to get all the ticket ids from ticket model.
-
-    /**const tickets = [];
-    var count = 0;
-    user.ticketsCreated.forEach(async t => {
-        ticketSaved = await Ticket.findOne({_id: t});
-        console.log(ticketSaved);
-        tickets.push(ticketSaved);
-        count++;
-        if (count >= user.ticketsCreated.length) {
-            res.status(200).send(objectConverter.ticketListResponse(tickets));
+    
+    if (user.userType == constants.userType.customer) {
+        if (user.ticketsCreated==null || user.ticketsCreated.length == 0) {
+            return res.status(200).send({
+                message: "No tickets created by you !!!"
+            });
         }
-    });*/
-    const queryObj = {
-        _id: {$in: user.ticketsCreated}
-    };
-    if (req.query.status) {queryObj.status = req.query.status}
-    const tickets = await  Ticket.find(queryObj)
 
-    res.status(200).send(objectConverter.ticketListResponse(tickets));
+        queryObj._id = {
+            $in: user.ticketsCreated
+        }
+    } 
+    else if (user.userType == constants.userType.engineer) {
+        // User is of type engineer.
+        if (user.ticketsCreated.length != 0){
+            queryObj._id = {
+                $in: user.ticketsCreated
+            }
+        }
+        // All the tickets where I am asignee.
+        queryObj.assignee = req.userId;
+    }
+
+    if (req.query.status != undefined) {
+        queryObj.status = req.query.status
+    }
+    const tickets = await Ticket.find(queryObj)
+
+    return res.status(200).send(objectConverter.ticketListResponse(tickets));
 }
 
 /**
@@ -112,14 +122,16 @@ exports.getOneTicket = async (req, res) => {
  * Write the controller to update the ticket.
  * 
  * TODO
- * Move all the validations to middlewares.
+ * Also check for the different users.
+ *  1. ADMIN
+ *  2. ENGINEER
  */
 
 exports.updateTicket = async (req, res) => {
     // Check if the ticket exists.
     const ticket = await Ticket.findOne({
         _id: req.params.id
-    }); 
+    });
     if (ticket == null) {
         return res.status(200).send({
             message: "Ticket doesn't exists."
@@ -128,10 +140,20 @@ exports.updateTicket = async (req, res) => {
 
     // Only ticket requester be allowed to update the ticket.
     const user = await User.findOne({
-        _id: req.userId
+        userId: req.userId
     });
+    /**
+     * Only checking for the user who has created the ticket.
+     * 
+     * 1. Admin
+     * 2. Engineer
+     */
 
-    if (!user.ticketsCreated.includes(req.params.id)) {
+    /** If the ticket is not assigned to any engineer. can self assign the ticket to themselves. */
+    if (ticket.assignee == undefined) {
+        ticket.assignee = req.userId
+    }
+    if ((user.ticketsCreated == undefined || !user.ticketsCreated.includes(req.params.id)) && !(user.userType == constants.userType.admin) && !(ticket.assignee == req.userId)) {
         return res.status(403).send({
             message: "Only owner of the ticket is allowed to update"
         });
@@ -142,8 +164,12 @@ exports.updateTicket = async (req, res) => {
     ticket.ticketPriority = req.body.ticketPriority != undefined ? req.body.ticketPriority: req.body.ticketPriority;
     ticket.status = req.body.status != undefined ? req.body.status: req.body.status;
      
+    // Ability to re-assign the ticket.
+    if (user.userType == constants.userType.admin) {
+        ticket.assignee = req.body.assignee != undefined ? req.body.assignee : ticket.assignee;
+    }
     // Save the change ticket.
     const updatedTicket = await ticket.save();
     // Return the updated ticket.
-    return res.status(200).send(objectConverter.ticketResponse(ticket));
+    return res.status(200).send(objectConverter.ticketResponse(updatedTicket));
 }
