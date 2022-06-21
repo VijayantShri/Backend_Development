@@ -10,7 +10,7 @@ const nodemailer = require("nodemailer");
  * credentials if needed.
  */
 
-const transporter = nodemailer.createTransport({
+module.exports = nodemailer.createTransport({
     service: "gmail",
     auth: {
         user: "", // <valid email Id>
@@ -19,22 +19,25 @@ const transporter = nodemailer.createTransport({
     secure: true
 });
 
-transporter.verify().then(console.log).catch(console.error);
+
+// This is to verify the transporter.
+// transporter.verify().then(console.log).catch(console.error);
+
 /**
  * Transporter will be used to send the emails.
  */
 
-const mailDataObj = {
-    from: "contacts@vijayantshri.com",
-    to: "vijayantshrivastav@gmail.com",
-    subject: "Very imp message",
-    text: "There is nothing important than time in life."
-};
+// const mailDataObj = {
+//     from: "contacts@vijayantshri.com",
+//     to: "vijayantshrivastav@gmail.com",
+//     subject: "Very imp message",
+//     text: "There is nothing important than time in life."
+// };
 
-transporter.sendMail(mailDataObj, (err, info) => {
-    if (err) {
-        console.log("Send email error: ", err);
-    } else {
-        console.log(info);
-    }
-});
+// transporter.sendMail(mailDataObj, (err, info) => {
+//     if (err) {
+//         console.log("Send email error: ", err);
+//     } else {
+//         console.log(info);
+//     }
+// });
