@@ -8,7 +8,7 @@ const Notification = require("../models/notification.model");
  * Accept a new notification request and return the tracking id.
  */
 
-exports.acceptNotificationRequest = (req, res) => {
+exports.acceptNotificationRequest = async (req, res) => {
     // Request body.
     const notificationObj = {
         subject: req.body.subject,
