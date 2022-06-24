@@ -36,3 +36,21 @@ exports.acceptNotificationRequest = async (req, res) => {
  * Check the notification status ( if email is sent or not ) using the tracking id.
  */
 
+exports.getNotificationStatus = async (req, res) => {
+    const notificationObj = {
+        ticketId: req.params.id
+    }
+
+    try {
+        const notification = await Notification.findOne(notificationObj);
+        res.status(200).send({
+            requestedId: notification.ticketId,
+            status: "Current status: " + notification.sentStatus
+        })
+    } catch (err) {
+        console.log("Error while checking the status of notificaiton ", err);
+        res.status(500).send({
+            message: "Error while checking notification status."
+        });
+    }
+}

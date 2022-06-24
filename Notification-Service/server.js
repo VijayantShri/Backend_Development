@@ -24,6 +24,11 @@ mongoose.connect(dbConfig.DB_URL , () => {
 // Stitching the routes
 require("./routes/ticketNotification.route")(app);
 
+/**
+ * Require the cron file.
+ */
+require("./crons/cron");
+
 // Starting the express server.
 app.listen(serverConfig.PORT, () => {
     console.log(`Aplication started on PORT: ${serverConfig.PORT}`);
